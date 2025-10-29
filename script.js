@@ -19,6 +19,105 @@ window.addEventListener("DOMContentLoaded", () => {
   const logoFallback = document.getElementById("logo-fallback");
   const imgCan = document.getElementById("water-can");
 
+  // Inject runtime styles to apply requested colors & gradient
+  (function injectStyles(){
+    const s = document.createElement("style");
+    s.type = "text/css";
+    s.textContent = `
+      /* Page background */
+      body {
+        background: #4FCB53;
+        margin: 0;
+      }
+
+      /* Game container (play area) — gradient */
+      #game-container {
+        background: linear-gradient(180deg, #FFFFFF 0%, #159A48 100%);
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* Start button color & typography (inherits font-family from styles.css) */
+      #start-btn {
+        background-color: #FFC907 !important;
+        color: #000 !important;
+        border: none;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      /* Reset button typography */
+      #reset-btn {
+        background-color: #ffffff;
+        color: #000;
+        border: none;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      /* Message, HUD and fallbacks use inherited fonts */
+      #message, #score, #timer, .water-can-fallback {
+        /* inherit from page */
+      }
+
+      /* Fallback can styling to match the palette */
+      .water-can-fallback {
+        background: linear-gradient(180deg,#FFC907 0%, #FFB000 100%);
+        color: #000;
+        border-radius: 8px;
+        padding: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      }
+
+      /* Difficulty buttons */
+      .difficulty-group {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 16px 0;
+      }
+      .difficulty-label {
+        font-weight: 700;
+        margin-right: 8px;
+        color: #fff;
+      }
+      .difficulty-btn {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 12px;
+        margin: 0 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.3s;
+      }
+      .difficulty-btn.active {
+        background-color: rgba(255, 255, 255, 0.4);
+      }
+      .difficulty-btn:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+      }
+
+      /* Danger drop styling */
+      .drop.danger {
+        background-color: #000 !important;
+        color: #fff !important;
+      }
+      .splash.danger {
+        background: radial-gradient(circle, rgba(255,255,255,0.6), rgba(0,0,0,0.95) 30%, rgba(0,0,0,0.5) 90%);
+      }
+    `;
+    document.head.appendChild(s);
+  })();
+
   // helper: try to load a sequence of candidate URLs, call onSuccess/onFail
   function tryLoadImage(element, candidates, onSuccess, onFail){
     let i = 0;
@@ -85,6 +184,34 @@ window.addEventListener("DOMContentLoaded", () => {
   centerCan();
   window.addEventListener("resize", centerCan);
 
+  // add footer with charity links
+  (function addFooter(){
+    if (document.querySelector(".site-footer")) return;
+    const footer = document.createElement("footer");
+    footer.className = "site-footer";
+    const txt = document.createElement("div");
+    txt.className = "site-footer-text";
+    txt.textContent = "Support clean water:";
+    const links = document.createElement("div");
+    links.className = "links";
+    const a1 = document.createElement("a");
+    a1.href = "https://www.charitywater.org/";
+    a1.target = "_blank";
+    a1.rel = "noopener noreferrer";
+    a1.textContent = "charity: water";
+    const a2 = document.createElement("a");
+    a2.href = "https://www.charitywater.org/donate/the-spring";
+    a2.target = "_blank";
+    a2.rel = "noopener noreferrer";
+    a2.textContent = "Give access to clean water";
+    links.appendChild(a1);
+    links.appendChild(a2);
+    footer.appendChild(txt);
+    footer.appendChild(links);
+    // append to body after main content
+    document.body.appendChild(footer);
+  })();
+
   // updateCanPosition now uses canEl (not imgCan)
   function updateCanPosition(clientX, clientY){
     if (!canEl) return;
@@ -118,18 +245,52 @@ window.addEventListener("DOMContentLoaded", () => {
   // UI updates
   function updateScoreUI(){
     scoreEl.textContent = score;
-    scoreEl.style.color = score < 0 ? "#b30000" : "#000000";
+    // if currently flashing, don't override the temporary red color
+    if (!scoreEl.classList.contains("score-flash")) {
+      scoreEl.style.color = score < 0 ? "#b30000" : "#000000";
+    }
   }
   function updateTimerUI(){ timerEl.textContent = timeLeft; }
+
+  // Add difficulty UI (Easy / Medium / Hard)
+  let difficulty = "easy"; // default
+  (function insertDifficultyUI(){
+    const group = document.createElement("div");
+    group.className = "difficulty-group";
+    const label = document.createElement("div");
+    label.className = "difficulty-label";
+    label.textContent = "Difficulty:";
+    group.appendChild(label);
+    ["easy","medium","hard"].forEach(level => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "difficulty-btn" + (level === "easy" ? " active" : "");
+      b.dataset.level = level;
+      b.textContent = level[0].toUpperCase() + level.slice(1);
+      b.addEventListener("click", () => {
+        if (gameRunning) return;
+        difficulty = level;
+        group.querySelectorAll(".difficulty-btn").forEach(n => n.classList.remove("active"));
+        b.classList.add("active");
+      });
+      group.appendChild(b);
+    });
+    // insert near start button if possible, otherwise append to top of body
+    if (startBtn && startBtn.parentNode) startBtn.parentNode.insertBefore(group, startBtn);
+    else document.body.insertBefore(group, document.body.firstChild);
+  })();
 
   // Start game
   startBtn.addEventListener("click", () => {
     if (gameRunning) return;
     gameRunning = true;
+    // hide start/reset and difficulty controls
     startBtn.classList.add("hidden");
     resetBtn.classList.add("hidden");
+    const dg = document.querySelector(".difficulty-group"); if (dg) dg.classList.add("hidden");
     messageEl.classList.add("hidden");
-    timeLeft = 60;
+    // set timer based on difficulty: hard => 30s, otherwise 60s
+    timeLeft = (difficulty === "hard") ? 30 : 60;
     score = 0;
     updateScoreUI();
     updateTimerUI();
@@ -160,6 +321,8 @@ window.addEventListener("DOMContentLoaded", () => {
     container.querySelectorAll(".drop, .splash").forEach(n => n.remove());
     resetBtn.classList.remove("hidden");
     startBtn.classList.add("hidden");
+    // reveal difficulty controls after game over
+    const dg = document.querySelector(".difficulty-group"); if (dg) dg.classList.remove("hidden");
     if (won){
       messageEl.textContent = "You win! 🎉";
       messageEl.classList.remove("hidden");
@@ -184,6 +347,8 @@ window.addEventListener("DOMContentLoaded", () => {
     resetBtn.classList.add("hidden");
     startBtn.classList.remove("hidden");
     gameRunning = false;
+    // make difficulty selectable again
+    const dg = document.querySelector(".difficulty-group"); if (dg) dg.classList.remove("hidden");
     centerCan();
   }
 
@@ -197,17 +362,40 @@ window.addEventListener("DOMContentLoaded", () => {
     const left = Math.random() * (containerEl.clientWidth - size - 8) + 4;
     drop.style.left = left + "px";
     drop.style.top = "-80px";
-    drop.style.animationDuration = (3.5 + Math.random()*1.7) + "s";
 
+    // adjust speed by difficulty:
+    // - Easy: original slow speed
+    // - Medium: use previous 'hard' speed (faster)
+    // - Hard: even faster than previous 'hard'
+    let animDurationSec;
+    if (difficulty === "hard") {
+      // even faster for hard (~1.2 - 2.0s)
+      animDurationSec = (1.2 + Math.random()*0.8);
+    } else if (difficulty === "medium") {
+      // medium uses the prior 'hard' pacing (~2.0 - 3.0s)
+      animDurationSec = (2.0 + Math.random()*1.0);
+    } else {
+      // easy/default (~3.5 - 5.2s)
+      animDurationSec = (3.5 + Math.random()*1.7);
+    }
+    drop.style.animationDuration = animDurationSec + "s";
+
+    // determine drop type probabilities including danger in medium+hard
     const r = Math.random();
-    if (r < 0.65) { drop.classList.add("good"); drop.dataset.type = "good"; }
-    else if (r < 0.9) { drop.classList.add("bad"); drop.dataset.type = "bad"; }
-    else {
-      drop.classList.add("coin"); drop.dataset.type = "coin";
-      const span = document.createElement("span");
-      span.className = "coin-icon material-icons";
-      span.textContent = "casino";
-      drop.appendChild(span);
+    if (difficulty === "easy") {
+      if (r < 0.65) { drop.classList.add("good"); drop.dataset.type = "good"; }
+      else if (r < 0.9) { drop.classList.add("bad"); drop.dataset.type = "bad"; }
+      else { drop.classList.add("coin"); drop.dataset.type = "coin"; const span = document.createElement("span"); span.className = "coin-icon material-icons"; span.textContent = "casino"; drop.appendChild(span); }
+    } else if (difficulty === "medium") {
+      if (r < 0.55) { drop.classList.add("good"); drop.dataset.type = "good"; }
+      else if (r < 0.8) { drop.classList.add("bad"); drop.dataset.type = "bad"; }
+      else if (r < 0.9) { drop.classList.add("coin"); drop.dataset.type = "coin"; const span = document.createElement("span"); span.className = "coin-icon material-icons"; span.textContent = "casino"; drop.appendChild(span); }
+      else { drop.classList.add("danger"); drop.dataset.type = "danger"; }
+    } else { // hard
+      if (r < 0.5) { drop.classList.add("good"); drop.dataset.type = "good"; }
+      else if (r < 0.75) { drop.classList.add("bad"); drop.dataset.type = "bad"; }
+      else if (r < 0.85) { drop.classList.add("coin"); drop.dataset.type = "coin"; const span = document.createElement("span"); span.className = "coin-icon material-icons"; span.textContent = "casino"; drop.appendChild(span); }
+      else { drop.classList.add("danger"); drop.dataset.type = "danger"; }
     }
 
     // remove on end
@@ -252,6 +440,15 @@ window.addEventListener("DOMContentLoaded", () => {
         spread: 80,
         origin: { x: Math.min(0.98, Math.max(0.02, cx/container.clientWidth)), y: Math.max(0.02, (cy/container.clientHeight)-0.2) }
       });
+    } else if (type === "danger") {
+      score -= 10;
+      // highlight score in red for danger (same visual feedback as bad)
+      scoreEl.style.color = "#ff0000";
+      scoreEl.classList.add("score-flash");
+      setTimeout(() => {
+        scoreEl.classList.remove("score-flash");
+        scoreEl.style.color = score < 0 ? "#b30000" : "#000000";
+      }, 700);
     }
     updateScoreUI();
     drop.remove();
@@ -271,6 +468,8 @@ window.addEventListener("DOMContentLoaded", () => {
       s.style.background = "radial-gradient(circle, rgba(255,255,255,0.6), rgba(61,168,255,0.95) 30%, rgba(61,168,255,0.35) 90%)";
     } else if (type === "bad") {
       s.style.background = "radial-gradient(circle, rgba(255,255,255,0.6), rgba(191,108,70,0.95) 30%, rgba(191,108,70,0.35) 90%)";
+    } else if (type === "danger") {
+      s.style.background = "radial-gradient(circle, rgba(255,255,255,0.6), rgba(0,0,0,0.95) 30%, rgba(0,0,0,0.5) 90%)";
     } else {
       s.style.background = "radial-gradient(circle, rgba(255,255,255,0.6), rgba(255,201,7,0.95) 30%, rgba(255,201,7,0.35) 90%)";
     }
