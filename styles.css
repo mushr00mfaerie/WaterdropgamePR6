@@ -1,0 +1,54 @@
+:root{
+  --bg1:#fed8c1;
+  --bg2:#cbccd1;
+  --good:#3da8ff;
+  --bad:#bf6c46;
+  --coin:#ffc907;
+  --text:#000000;
+}
+
+*{box-sizing:border-box;font-family:Inter, system-ui, Arial, sans-serif}
+body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(0,0,0,0.25)}
+.logo{height:48px}
+.logo-fallback{height:48px;display:flex;align-items:center;font-weight:700;font-size:1.25rem;color:var(--text);padding-left:6px}
+.ui{display:flex;gap:12px;align-items:center}
+.score-wrap,#timer{font-weight:700;font-size:1.1rem}
+.btn{background:#1f6feb;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+.btn.hidden{display:none}
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:20px}
+.game-container{position:relative;width:900px;height:600px;background:linear-gradient(180deg,#06203a55,#09304655);border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(2,6,23,0.7)}
+.water-can{position:absolute;bottom:auto;left:0;/* no CSS translate - JS will set left/top */width:160px;height:auto;pointer-events:none;z-index:50;touch-action:none}
+.water-can-fallback{position:absolute;left:0;width:160px;height:110px;background:linear-gradient(180deg,#ffffff55,#d0e8ff66);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#003b6f;box-shadow:0 8px 20px rgba(0,0,0,0.12);pointer-events:none;z-index:50}
+.drop{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:30;animation-name:fall;animation-timing-function:linear}
+.drop.good{background:var(--good);box-shadow:0 6px 12px rgba(61,168,255,0.25)}
+.drop.bad{background:var(--bad);box-shadow:0 6px 12px rgba(191,108,70,0.25)}
+.drop.coin{background:transparent;width:44px;height:44px}
+.drop .coin-icon{font-family:"Material Icons";font-size:28px;color:var(--coin);filter:drop-shadow(0 4px 8px rgba(255,201,7,0.25))}
+@keyframes fall {
+  from { transform: translateY(-60px); opacity:1 }
+  to { transform: translateY(620px); opacity:1 }
+}
+
+/* splash */
+.splash{position:absolute;border-radius:50%;z-index:40;pointer-events:none;transform:translate(-50%,-50%) scale(0);opacity:0.95}
+.splash.animate{animation: splashPop 520ms ease-out forwards}
+@keyframes splashPop {
+  0%{transform:translate(-50%,-50%) scale(0);opacity:0.95}
+  60%{transform:translate(-50%,-50%) scale(1.25);opacity:0.6}
+  100%{transform:translate(-50%,-50%) scale(1.6);opacity:0}
+}
+
+/* message overlay */
+.message{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(6,12,20,0.8);padding:18px 28px;border-radius:10px;font-size:1.4rem;z-index:100;color:var(--text)}
+.hidden{display:none}
+
+/* score flash when negative */
+.score-flash{color:#ff5b5b;transition:color 200ms ease}
+
+/* responsive */
+@media (max-width:980px){
+  .game-container{width:100%;height:520px}
+  .water-can{width:120px}
+  .water-can-fallback{width:120px;height:90px}
+}

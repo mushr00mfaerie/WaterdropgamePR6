@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Water Drop Catcher</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Google Material Icons for poker chip (casino) -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+  <header class="top-bar">
+    <!-- try multiple locations; script will pick first that loads (including img/) -->
+    <img id="logo-img" src="img/cw_logo-horizontal.png" data-srcs="img/cw_logo-horizontal.png,cw_logo-horizontal.png,assets/cw_logo-horizontal.png,images/cw_logo-horizontal.png" alt="CW Logo" class="logo" />
+    <div id="logo-fallback" class="logo-fallback hidden">CW</div>
+    <div class="ui">
+      <div class="score-wrap">
+        Score: <span id="score">0</span>
+      </div>
+      <div class="timer-wrap">
+        Time: <span id="timer">60</span>s
+      </div>
+      <button id="start-btn" class="btn">Start</button>
+      <button id="reset-btn" class="btn hidden">Reset</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="game-container" class="game-container">
+      <!-- can will try these locations (img/, project root, assets/, images/) -->
+      <img id="water-can" src="img/water-can-transparent.png" data-srcs="img/water-can-transparent.png,water-can-transparent.png,assets/water-can-transparent.png,images/water-can-transparent.png" alt="Water Can" class="water-can" draggable="false" />
+      <!-- drops will be appended here -->
+    </div>
+    <div id="message" class="message hidden"></div>
+  </main>
+
+  <!-- confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
